@@ -43,3 +43,26 @@ function wra_get_return_url( $return_url, $order ) {
 }
 
 add_filter( 'woocommerce_get_return_url', 'wra_get_return_url', 10, 2 );
+
+
+/**
+ * FluentForm submission redirect for the Rental Agreement form.
+ *
+ * Add this to redirect users after a FluentForm submission when the form includes an order_key field.
+ * Replace YOUR_FORM_ID with the numeric ID of your FluentForm.
+ */
+add_action( 'fluentform/submission_inserted', function( $entryId, $formData, $form ) {
+    // Only run for your Rental Agreement form - check the form ID
+    if ( empty( $form ) || (int) $form->id !== (int) YOUR_FORM_ID ) {
+        return;
+    }
+
+    $order_key = isset( $formData['order_key'] ) ? sanitize_text_field( wp_unslash( $formData['order_key'] ) ) : '';
+
+    if ( $order_key ) {
+        // Build and sanitize the redirect URL.
+        $redirect_url = esc_url_raw( 'https://scrambler.blog/checkout/bute-order-confirmation/308/?key=' . rawurlencode( $order_key ) );
+        wp_redirect( $redirect_url );
+        exit;
+    }
+}, 10, 3 );
