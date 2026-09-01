@@ -3,7 +3,7 @@ Contributors: TEMHDARWIN
 Tags: woocommerce, rental, order, return
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 1.0.1
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,8 +21,17 @@ This plugin modifies the URL customers are sent to after completing checkout so 
 
 == Changelog ==
 
+= 1.0.4 =
+* Inject client-side JS that listens for FluentForm success events and redirects using the 'key' query param. Listens to multiple event names for compatibility.
+
+= 1.0.3 =
+* Added previous JS approach (page ID 241) and improvements.
+
+= 1.0.2 =
+* Use fluentform/submission_confirmation redirect (form ID 3)
+
 = 1.0.1 =
-* Set FluentForm ID to 3 and improved sanitization and AJAX handling.
+* Set FluentForm ID to 3 and improved handling.
 
 = 1.0.0 =
 * Initial release.

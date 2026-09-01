@@ -2,8 +2,8 @@
 /**
  * Plugin Name: WooCommerce Rental Agreement Return URL
  * Plugin URI: https://github.com/TEMHDARWIN/woocommerce-rental-agreement
- * Description: Redirects WooCommerce return URL to a rental agreement page including order ID and order key. Also handles a FluentForm submission redirect when an order_key is present.
- * Version: 1.0.1
+ * Description: Redirects WooCommerce return URL to a rental agreement page including order ID and order key. Also handles FluentForm client-side redirects when an order_key is present.
+ * Version: 1.0.4
  * Author: TEMHDARWIN
  * License: GPL2
  * Text Domain: woocommerce-rental-agreement
@@ -43,30 +43,65 @@ add_filter( 'woocommerce_get_return_url', 'wra_get_return_url', 10, 2 );
 
 
 /**
- * FluentForm submission redirect for the Rental Agreement form.
- *
- * Form ID is set to 3 per user's request.
- * This handles both normal and AJAX submissions (returns JSON for AJAX).
+ * Preferred FluentForm hook: modify the submission confirmation to perform a redirect.
+ * This runs for form ID 3 and checks the saved submission for an order_key field.
  */
-add_action( 'fluentform/submission_inserted', function( $entryId, $formData, $form ) {
-    // Only run for your Rental Agreement form - form ID 3
+add_filter( 'fluentform/submission_confirmation', function( $confirmation, $form, $entryId ) {
+    // Only run for form ID 3
     if ( empty( $form ) || (int) $form->id !== 3 ) {
-        return;
+        return $confirmation;
     }
 
-    $order_key = isset( $formData['order_key'] ) ? sanitize_text_field( wp_unslash( $formData['order_key'] ) ) : '';
-
-    if ( ! $order_key ) {
-        return;
+    // Ensure the wpFluent() helper exists and the submissions table is available
+    if ( ! function_exists( 'wpFluent' ) ) {
+        return $confirmation;
     }
 
-    $redirect_url = esc_url_raw( 'https://scrambler.blog/checkout/bute-order-confirmation/308/?key=' . rawurlencode( $order_key ) );
-
-    // If the form submits via AJAX, return JSON so client-side JS can handle the redirect.
-    if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
-        wp_send_json_success( array( 'redirect' => $redirect_url ) );
-    } else {
-        wp_safe_redirect( $redirect_url );
-        exit;
+    $entry = wpFluent()->table( 'fluentform_submissions' )->where( 'id', $entryId )->first();
+    if ( ! $entry || empty( $entry->response ) ) {
+        return $confirmation;
     }
+
+    $formData = json_decode( $entry->response, true );
+    if ( ! is_array( $formData ) ) {
+        return $confirmation;
+    }
+
+    $order_key = isset( $formData['order_key'] ) ? sanitize_text_field( $formData['order_key'] ) : '';
+
+    if ( $order_key ) {
+        $redirect = 'https://scrambler.blog/checkout/bute-order-confirmation/308/?key=' . rawurlencode( $order_key );
+        return array(
+            'redirectUrl' => esc_url_raw( $redirect ),
+            'type'        => 'redirect',
+        );
+    }
+
+    return $confirmation;
 }, 10, 3 );
+
+
+/**
+ * Final approach: inject a small JS snippet on the Rental Agreement page footer that listens for
+ * Fluent Forms' client-side success events and redirects using the 'key' parameter from the page URL.
+ */
+add_action( 'wp_footer', function() {
+    // Change 241 to your Rental Agreement page ID if different.
+    if ( ! is_page( 241 ) ) {
+        return;
+    }
+
+    ?>
+    <script>
+    function temhRedirect() {
+        var key = new URLSearchParams(window.location.search).get('key');
+        if (key) {
+            window.location.href = 'https://scrambler.blog/checkout/bute-order-confirmation/308/?key=' + key;
+        }
+    }
+    document.addEventListener('fluentform_submission_success', temhRedirect);
+    document.addEventListener('ff_submission_success', temhRedirect);
+    document.addEventListener('fluentFormSubmissionSuccess', temhRedirect);
+    </script>
+    <?php
+}, 10 );
