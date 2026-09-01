@@ -3,7 +3,7 @@ Contributors: TEMHDARWIN
 Tags: woocommerce, rental, order, return
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: trunk
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,11 +15,14 @@ This plugin modifies the URL customers are sent to after completing checkout so 
 
 == Installation ==
 
-1. Upload the plugin folder to the `/wp-content/plugins/` directory, or install it via the WordPress plugin uploader using the ZIP from the repository.
+1. Upload the plugin folder to the `/wp-content/plugins/` directory, or install it via the WordPress plugin uploader using the ZIP you create.
 2. Activate the plugin through the "Plugins" screen in WordPress.
 3. Create a page with slug `rental-agreement` and implement verification for `order_id` and `key`.
 
 == Changelog ==
+
+= 1.0.1 =
+* Set FluentForm ID to 3 and improved sanitization and AJAX handling.
 
 = 1.0.0 =
 * Initial release.
